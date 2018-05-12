@@ -17,14 +17,14 @@
 						<div class="field">
 							<label class="label">Nombre</label>
 							<p class="control">
-								<input type="text" class="input" placeholder="Nombre">
+								<input type="text" class="input" placeholder="Nombre" v-model="form.name">
 							</p>
 						</div>
 						
 						<div class="field">
 							<label class="label">Descripci&oacute;n</label>
 							<p class="control">
-								<input type="text" class="input" placeholder="Descripcion">
+								<input type="text" class="input" placeholder="Descripcion" v-model="form.description">
 							</p>
 						</div>
 	
@@ -33,20 +33,23 @@
 								<div class="field">
 									<label class="label">Cantidad</label>
 									<p class="control">
-										<input type="number" class="input" placeholder="0" v-model="form.value">
+										<input type="number" class="input" placeholder="0" v-model="form.quantity">
 									</p>
 								</div>
 								<div class="field">
 									<label class="label">Costo</label>
 									<p class="control">
-										<input type="number" class="input" placeholder="0.00">
+										<input type="number" class="input" placeholder="0.00" v-model="form.cost">
 									</p>
 								</div>	
 							</div>
 						</div>
-						<div class="field">
+						<div class="field is-grouped">
 							<p class="control">
 								<button class="button is-success" @click="add">Agregar</button>
+							</p>
+							<p class="control">
+								<button class="button is-success" @click="addAtBeginig">Agregar al Inicio</button>
 							</p>
 						</div>
 	
@@ -63,6 +66,14 @@
 								<button class="button is-danger" @click="remove">Eliminar</button>
 							</p>
 						</div>
+						<div class="field is-grouped">
+							<p class="control">
+								<button class="button is-danger" @click="removeFirst">Eliminar Primero</button>
+							</p>
+							<p class="control">
+								<button class="button is-danger" @click="removeLast">Eliminar Ultimo</button>
+							</p>
+						</div>
 					</div>
 					<div class="column">
 						<div class="field is-grouped is-grouped-centered">
@@ -70,19 +81,32 @@
 								<button class="button is-primary" @click="list">Listar</button>
 							</p>
 							<p class="control">
-								<button class="button is-info">Listar inverso</button>
+								<button class="button is-info" @click="listReverse">Listar inverso</button>
 							</p>
 							<p class="control">
-								<button class="button is-link" @click="inverse">Invertir</button>
+								<button class="button is-link" @click="reverse">Invertir</button>
 							</p>
 						</div>
-						<div class="content">
-							<ul>
-								<li v-for="item in items">
-									{{ item }}
-								</li>
-							</ul>
-						</div>
+						<table class="table is-striped is-fullwidth">
+							<thead>
+								<tr>
+									<th>Codigo</th>
+									<th>Nombre</th>
+									<th>Descripcion</th>
+									<th>Cantidad</th>
+									<th>Costo</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="item in items">
+									<th>{{ item.code }}</th>
+									<th>{{ item.name }}</th>
+									<th>{{ item.description }}</th>
+									<th>{{ item.quantity }}</th>
+									<th>${{ item.cost.toFixed(2) }}</th>
+								</tr>
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>
@@ -90,14 +114,9 @@
 		<section class="section">
 			<div class="container">
 				<div class="columns">
-					<div class="column is-half">
-						<div class="content">
-							<pre>{{ catalog.first }}</pre>
-						</div>
-					</div>
 					<div class="column">
 						<div class="content">
-							<pre>{{ result !== null ? result : 'null' }}</pre>
+							<pre>{{ catalog.first }}</pre>
 						</div>
 					</div>
 				</div>
@@ -107,44 +126,66 @@
 </body>
 </html>
 <script src="Vue.js"></script>
-<script src="Node.js"></script>
+<script src="Product.js"></script>
 <script src="List.js"></script>
 <script>
-	const list = new List()
 	const vm = new Vue({
 		el: '#app',
 		data: {
-			catalog: list,
-			result: null,
+			catalog: new LinkedList(),
 			items: [],
 			form: {
-				value: '',
-				code: ''
+				name: '',
+				description: '',
+				quantity: '',
+				cost: '',
+				code: '',
+				id: 1
 			}
 		},
 		methods: {
 			add: function() {
-				const node = new Node(this.form.value)
+				const node = new Product(
+					String(this.form.id++),
+					this.form.name, this.form.description,
+					Number(this.form.quantity),
+					Number(this.form.cost))
 				this.catalog.add(node)
-				this.result = null
-				this.items = []
+				this.items = this.catalog.toArray()
+			},
+			addAtBeginig: function() {
+				const node = new Product(
+					String(this.form.id++),
+					this.form.name, this.form.description,
+					Number(this.form.quantity),
+					Number(this.form.cost))
+				this.catalog.addAtBeginig(node)
+				this.items = this.catalog.toArray()
 			},
 			search: function() {
-				this.result = this.catalog.search(this.form.code)
-				this.items = []
+				this.items = [this.catalog.search(this.form.code)]
 			},
 			remove: function() {
-				this.result = this.catalog.delete(this.form.code)
-				this.items = []
+				this.catalog.delete(this.form.code)
+				this.items = this.catalog.toArray()
 			},
-			inverse: function() {
-				this.catalog.inverse()
-				this.result = null
-				this.items = []
+			removeFirst: function() {
+				this.catalog.deleteFirst()
+				this.items = this.catalog.toArray()
+			},
+			removeLast: function() {
+				this.catalog.deleteLast()
+				this.items = this.catalog.toArray()
+			},
+			reverse: function() {
+				this.catalog.reverse()
+				this.items = this.catalog.toArray()
 			},
 			list: function() {
 				this.items = this.catalog.toArray()
-				this.result = null
+			},
+			listReverse: function() {
+				this.items = this.catalog.toReverseArray()
 			}
 		}
 	})
